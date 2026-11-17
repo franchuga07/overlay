@@ -14,26 +14,50 @@
 html,body{width:1920px;height:1080px;overflow:hidden;background:transparent;font-family:Inter,system-ui,sans-serif;color:var(--texto)}
 
 /* ---------- Reproductor (arriba a la derecha) ---------- */
-#musica{position:absolute;top:38px;right:38px;width:520px;height:132px;display:flex;align-items:center;gap:18px;padding:14px;
-  background:#000;border:3px solid var(--morado);border-radius:18px;box-shadow:0 0 28px rgba(139,92,246,.45);
-  transition:opacity .6s,transform .6s cubic-bezier(.2,1.2,.3,1)}
+#musica{position:absolute;top:38px;right:38px;width:600px;height:132px;display:flex;align-items:center;gap:18px;padding:14px;
+  --acento:#a78bfa;--acento-suave:rgba(167,139,250,.45);--acento-claro:#ddd6fe;
+  background:#000;border:3px solid var(--acento);border-radius:18px;box-shadow:0 0 28px var(--acento-suave);
+  transition:opacity .6s,transform .6s cubic-bezier(.2,1.2,.3,1),border-color 1.2s,box-shadow 1.2s}
 #musica.oculto{opacity:0;transform:translateX(120px)}
-.portada{position:relative;flex:0 0 100px;height:100px;border-radius:12px;overflow:hidden;background:#1a1030}
+.disco-zona{position:relative;flex:0 0 156px;height:104px}
+.portada{position:absolute;left:0;top:0;width:104px;height:104px;border-radius:10px;overflow:hidden;background:#1a1030;z-index:2;
+  box-shadow:6px 0 14px rgba(0,0,0,.7)}
 .portada img{width:100%;height:100%;object-fit:cover;display:block}
-#musica.pausa .portada img{filter:grayscale(.8) brightness(.6)}
+/* Vinilo medio salido de la portada */
+.vinilo{position:absolute;top:3px;left:52px;width:98px;height:98px;border-radius:50%;z-index:1;
+  background:
+    radial-gradient(circle,transparent 0 31%,rgba(0,0,0,0) 31%),
+    repeating-radial-gradient(circle,#1e1e24 0 1.5px,#34343c 1.5px 3px),
+    #1e1e24;
+  box-shadow:0 0 0 2px var(--acento),0 0 14px var(--acento-suave);
+  animation:girar 2.4s linear infinite, salir .9s cubic-bezier(.2,1,.3,1)}
+.vinilo::before{content:"";position:absolute;inset:0;border-radius:50%;
+  background:conic-gradient(from 20deg,transparent 0 10%,rgba(255,255,255,.28) 14%,transparent 20% 55%,rgba(255,255,255,.2) 60%,transparent 66%)}
+.vinilo .etiqueta{position:absolute;inset:32%;border-radius:50%;overflow:hidden;background:var(--acento)}
+.vinilo .etiqueta img{width:100%;height:100%;object-fit:cover}
+.vinilo .etiqueta::after{content:"";position:absolute;left:50%;top:50%;width:6px;height:6px;margin:-3px;border-radius:50%;background:#000}
+#musica.pausa .vinilo{animation-play-state:paused}
+#musica.pausa .vinilo{left:18px}
+.vinilo{transition:left .8s cubic-bezier(.2,1,.3,1),box-shadow 1.2s}
+#musica.pausa .portada img,#musica.pausa .vinilo .etiqueta img{filter:grayscale(.8) brightness(.6)}
+#musica.pausa .cancion,#musica.pausa .artista{opacity:.6}
+@keyframes girar{to{transform:rotate(360deg)}}
+@keyframes salir{from{left:4px}to{left:52px}}
 .info{flex:1;min-width:0;display:flex;flex-direction:column;gap:4px}
-.cabecera{display:flex;align-items:center;gap:8px;font:700 14px 'Chakra Petch',sans-serif;letter-spacing:3px;color:var(--lila);text-transform:uppercase}
+.cabecera{display:flex;align-items:center;gap:8px;font:700 14px 'Chakra Petch',sans-serif;letter-spacing:3px;color:var(--acento-claro);text-transform:uppercase;transition:color 1.2s}
 .ondas{display:flex;align-items:flex-end;gap:3px;height:14px}
-.ondas i{width:3px;background:var(--rosa);border-radius:2px;animation:onda .9s ease-in-out infinite}
+.ondas i{width:3px;background:var(--acento);border-radius:2px;animation:onda .9s ease-in-out infinite}
 .ondas i:nth-child(2){animation-delay:-.3s}.ondas i:nth-child(3){animation-delay:-.6s}.ondas i:nth-child(4){animation-delay:-.15s}
 #musica.pausa .ondas i{animation:none;height:3px}
 @keyframes onda{0%,100%{height:3px}50%{height:14px}}
 .cancion,.artista{white-space:nowrap;overflow:hidden}
 .cancion{font:700 26px/1.2 'Chakra Petch',sans-serif}
 .artista{font-size:18px;color:var(--suave)}
-.cancion span,.artista span{display:inline-block;padding-right:60px}
-.desliza span{animation:deslizar var(--dur,10s) linear infinite}
-@keyframes deslizar{0%,15%{transform:translateX(0)}85%,100%{transform:translateX(var(--dist))}}
+.cancion > span,.artista > span{display:inline-block}
+/* Cinta infinita: el texto va duplicado y avanza siempre hacia la izquierda */
+.cinta > span{animation:cinta var(--dur,10s) linear infinite}
+.cinta > span i{font-style:normal;padding-right:70px}
+@keyframes cinta{from{transform:translateX(0)}to{transform:translateX(-50%)}}
 .barra{height:5px;border-radius:3px;background:rgba(196,181,253,.18);margin-top:6px;overflow:hidden}
 .barra div{height:100%;width:0;background:linear-gradient(90deg,var(--morado),var(--rosa));transition:width 1s linear}
 #depurar{position:absolute;left:40px;bottom:40px;max-width:900px;padding:14px 20px;border-radius:12px;background:rgba(0,0,0,.85);
@@ -43,7 +67,10 @@ html,body{width:1920px;height:1080px;overflow:hidden;background:transparent;font
 <body>
 
 <div id="musica" class="oculto">
-  <div class="portada"><img id="portada" alt=""></div>
+  <div class="disco-zona">
+    <div class="vinilo" id="vinilo"><div class="etiqueta"><img id="etiqueta" alt=""></div></div>
+    <div class="portada"><img id="portada" alt=""></div>
+  </div>
   <div class="info">
     <div class="cabecera"><div class="ondas"><i></i><i></i><i></i><i></i></div><span id="estado">Sonando ahora</span></div>
     <div class="cancion" id="cancion"><span></span></div>
@@ -63,7 +90,7 @@ const LASTFM_USUARIO = "XERRUG";   // tu nombre de usuario de Last.fm
 const LASTFM_API_KEY = "b3736756a13f3e161f42327a3a1d6d6f";   // la "API key" (NO el "shared secret")
 
 const CADA_MS = 8000;        // cada cuánto mira qué suena
-const DEPURAR = true;        // true = muestra abajo a la izquierda qué falla. Cuando funcione, ponlo en false.
+const DEPURAR = false;        // true = muestra abajo a la izquierda qué falla. Cuando funcione, ponlo en false.
 
 const $ = (id) => document.getElementById(id);
 let ultimaCancion = "";
@@ -75,17 +102,18 @@ function aviso(texto){
 }
 
 function ponerTexto(el, texto){
+  if (el.dataset.texto === texto) return;
+  el.dataset.texto = texto;
   const span = el.querySelector('span');
-  if (span.textContent === texto) return;
+  el.classList.remove('cinta');
   span.textContent = texto;
-  el.classList.remove('desliza');
   requestAnimationFrame(() => {
-    const sobra = span.scrollWidth - el.clientWidth;
-    if (sobra > 0){                       // si no cabe, el texto se desliza
-      el.style.setProperty('--dist', `-${sobra + 10}px`);
-      el.style.setProperty('--dur', `${Math.max(8, sobra / 25)}s`);
-      el.classList.add('desliza');
-    }
+    if (span.scrollWidth <= el.clientWidth) return;     // cabe: se queda quieto
+    const seguro = texto.replace(/[&<>]/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;' }[c]));
+    span.innerHTML = `<i>${seguro}</i><i>${seguro}</i>`; // dos copias seguidas = vuelta infinita sin saltos
+    const ancho = span.scrollWidth / 2;
+    el.style.setProperty('--dur', `${Math.max(6, ancho / 45)}s`); // ~45 px por segundo
+    el.classList.add('cinta');
   });
 }
 
@@ -110,7 +138,7 @@ function portadaApple(cancion, artista){
 async function actualizar(){
   const caja = $('musica');
   if (!LASTFM_USUARIO || !LASTFM_API_KEY){
-    caja.classList.add('oculto');
+    parado();
     aviso('Falta poner tu usuario y tu API key de Last.fm en el archivo (líneas LASTFM_USUARIO y LASTFM_API_KEY).');
     return;
   }
@@ -118,13 +146,13 @@ async function actualizar(){
     const url = 'https://ws.audioscrobbler.com/2.0/?method=user.getrecenttracks&limit=1&format=json' +
                 '&user=' + encodeURIComponent(LASTFM_USUARIO) + '&api_key=' + encodeURIComponent(LASTFM_API_KEY);
     const j = await (await fetch(url, { cache: 'no-store' })).json();
-    if (j.error){ caja.classList.add('oculto'); aviso('Last.fm dice: ' + j.message + ' (revisa el usuario y la API key).'); return; }
+    if (j.error){ parado(); aviso('Last.fm dice: ' + j.message + ' (revisa el usuario y la API key).'); return; }
 
     const lista = j.recenttracks && j.recenttracks.track;
     const t = Array.isArray(lista) ? lista[0] : lista;
     const sonando = t && t['@attr'] && t['@attr'].nowplaying === 'true';
     if (!sonando){
-      caja.classList.add('oculto');
+      parado();
       aviso('Conectado con Last.fm, pero ahora mismo no marca nada sonando. Pon música en Cider y comprueba que el scrobbling está activado.');
       return;
     }
@@ -139,16 +167,76 @@ async function actualizar(){
         portada = (imgs[imgs.length - 1] || {})['#text'] || '';
         if (portada.includes('2a96cbd8b46e442fc41c2b86b821562f')) portada = ''; // estrella gris = sin portada
       }
-      $('portada').src = portada || 'data:image/svg+xml,' + encodeURIComponent('<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100"><rect width="100" height="100" fill="#2a1650"/><text x="50" y="66" font-size="48" text-anchor="middle">🎵</text></svg>');
+      const img = portada || SIN_PORTADA;
+      $('portada').src = img; $('etiqueta').src = img;
+      if (portada) colorDePortada(portada); else ponerAcento();
+      const v = $('vinilo'); v.style.animation = 'none'; void v.offsetWidth; v.style.animation = '';
     }
     ponerTexto($('cancion'), cancion);
     ponerTexto($('artista'), artista);
     caja.classList.remove('pausa', 'oculto');
+    $('estado').textContent = 'Sonando ahora';
     aviso('');
   } catch (e) {
-    caja.classList.add('oculto');
+    parado();
     aviso('No consigo conectar con Last.fm. ¿Hay internet?');
   }
+}
+
+
+/* Estado "sin música": el reproductor se queda visible pero parado */
+const SIN_PORTADA = 'data:image/svg+xml,' + encodeURIComponent('<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100"><rect width="100" height="100" fill="#2a1650"/><text x="50" y="66" font-size="48" text-anchor="middle">🎵</text></svg>');
+function parado(){
+  const caja = $('musica');
+  caja.classList.remove('oculto');
+  caja.classList.add('pausa');
+  $('estado').textContent = 'Sin música';
+  if (!ultimaCancion){                       // nunca ha sonado nada todavía
+    $('portada').src = SIN_PORTADA; $('etiqueta').src = SIN_PORTADA;
+    ponerTexto($('cancion'), 'Nada sonando');
+    ponerTexto($('artista'), 'Pon algo de música 🎧');
+  }
+}
+
+/* Color del borde según la portada */
+function colorDePortada(url){
+  const img = new Image();
+  img.crossOrigin = 'anonymous';
+  img.onload = () => {
+    try {
+      const c = document.createElement('canvas'); c.width = c.height = 32;
+      const x = c.getContext('2d'); x.drawImage(img, 0, 0, 32, 32);
+      const d = x.getImageData(0, 0, 32, 32).data;
+      let r = 0, g = 0, b = 0, peso = 0;
+      for (let i = 0; i < d.length; i += 4){
+        const R = d[i], G = d[i+1], B = d[i+2];
+        const max = Math.max(R, G, B), min = Math.min(R, G, B);
+        const sat = max ? (max - min) / max : 0, luz = max / 255;
+        const w = Math.pow(sat, 2) * (luz > .15 ? 1 : .1) + .002;  // premia los colores vivos
+        r += R * w; g += G * w; b += B * w; peso += w;
+      }
+      ponerAcento(r / peso, g / peso, b / peso);
+    } catch (_) { ponerAcento(); }
+  };
+  img.onerror = () => ponerAcento();
+  img.src = url;
+}
+function ponerAcento(r, g, b){
+  const caja = $('musica');
+  if (r === undefined){ caja.style.removeProperty('--acento'); caja.style.removeProperty('--acento-suave'); caja.style.removeProperty('--acento-claro'); return; }
+  // a HSL para que el color siempre se vea bien sobre negro
+  r /= 255; g /= 255; b /= 255;
+  const max = Math.max(r, g, b), min = Math.min(r, g, b), l = (max + min) / 2;
+  let h = 0, s = 0;
+  if (max !== min){
+    const d = max - min; s = l > .5 ? d / (2 - max - min) : d / (max + min);
+    h = max === r ? (g - b) / d + (g < b ? 6 : 0) : max === g ? (b - r) / d + 2 : (r - g) / d + 4; h *= 60;
+  }
+  if (s < .12){ ponerAcento(); return; }      // portada en blanco y negro → lila de siempre
+  const S = Math.max(s, .65) * 100;
+  caja.style.setProperty('--acento', `hsl(${h} ${S}% 62%)`);
+  caja.style.setProperty('--acento-suave', `hsl(${h} ${S}% 55% / .45)`);
+  caja.style.setProperty('--acento-claro', `hsl(${h} ${S}% 85%)`);
 }
 
 aviso('Conectando con Last.fm…');
