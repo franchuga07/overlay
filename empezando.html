@@ -1,0 +1,551 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<title>Empezamos en breve (vista aérea) · franchu_ga</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Chakra+Petch:wght@600;700&family=Inter:wght@400;500;600&family=Inter+Tight:wght@500;600;700&display=swap" rel="stylesheet">
+<style>
+:root{--texto:#f5f3ff;--suave:#c9bfe4;
+  --acento:#a78bfa;--acento-suave:rgba(167,139,250,.45);--acento-claro:#ddd6fe;
+  --sombra:14px 22px 34px rgba(0,0,0,.7)}
+*{box-sizing:border-box;margin:0;padding:0}
+html,body{width:1920px;height:1080px;overflow:hidden;background:#111;font-family:Inter,system-ui,sans-serif;color:var(--texto)}
+
+/* =================== MESA DE MADERA (dibujada, no realista) =================== */
+.mesa{position:absolute;inset:0;
+  background:
+    /* juntas entre tablones */
+    repeating-linear-gradient(180deg,transparent 0 214px,rgba(0,0,0,.75) 214px 217px,rgba(255,255,255,.05) 217px 219px,transparent 219px 220px),
+    /* vetas */
+    repeating-linear-gradient(180deg,transparent 0 9px,rgba(0,0,0,.25) 9px 11px,transparent 11px 23px,rgba(255,255,255,.035) 23px 24px,transparent 24px 37px),
+    /* tono de cada tablón */
+    repeating-linear-gradient(180deg,#1b1a1d 0 220px,#161518 220px 440px,#1e1d21 440px 660px,#18171a 660px 880px,#1c1b1f 880px 1100px)}
+/* vetas onduladas y nudos */
+.mesa::before{content:"";position:absolute;inset:0;opacity:.5;
+  background:
+    radial-gradient(ellipse 70px 22px at 260px 120px,rgba(0,0,0,.55) 0 30%,rgba(0,0,0,.25) 31% 55%,transparent 56%),
+    radial-gradient(ellipse 54px 16px at 1460px 560px,rgba(0,0,0,.5) 0 30%,rgba(0,0,0,.2) 31% 55%,transparent 56%),
+    radial-gradient(ellipse 60px 18px at 820px 960px,rgba(0,0,0,.5) 0 30%,rgba(0,0,0,.2) 31% 55%,transparent 56%),
+    radial-gradient(ellipse 900px 40px at 300px 330px,transparent 60%,rgba(255,255,255,.04) 61% 63%,transparent 64%),
+    radial-gradient(ellipse 1100px 50px at 1500px 790px,transparent 60%,rgba(255,255,255,.04) 61% 63%,transparent 64%),
+    radial-gradient(ellipse 800px 36px at 900px 1010px,transparent 60%,rgba(255,255,255,.035) 61% 63%,transparent 64%)}
+/* luz de color sobre la mesa (coge el color de la música) */
+.luz{position:absolute;inset:0;mix-blend-mode:screen;opacity:.55;transition:background 1.5s;
+  background:
+    radial-gradient(circle 900px at 48% 52%,color-mix(in srgb,var(--acento) 65%,transparent),transparent 70%),
+    radial-gradient(circle 700px at 85% 10%,color-mix(in srgb,var(--acento) 40%,transparent),transparent 70%)}
+.vineta{position:absolute;inset:0;background:radial-gradient(ellipse at 50% 50%,transparent 55%,rgba(0,0,0,.55))}
+
+/* =================== TÍTULO =================== */
+.titulo{position:absolute;left:50%;top:120px;transform:translateX(-50%);text-align:center;white-space:nowrap;font:600 70px/1 'Inter Tight',sans-serif;letter-spacing:5px;text-transform:uppercase;color:#fff;
+  text-shadow:0 4px 0 rgba(0,0,0,.5),0 0 30px var(--acento-suave);transition:text-shadow 1.2s}
+
+/* =================== iPHONE en horizontal (cuenta atrás) =================== */
+.iphone{position:absolute;left:1320px;top:60px;width:410px;height:190px;border-radius:46px;padding:8px;
+  background:linear-gradient(135deg,#3b3b40,#121214 40%,#1d1d21);box-shadow:var(--sombra),inset 0 0 0 2px #4a4a50}
+/* botones (en horizontal quedan arriba y abajo) */
+.iphone::before{content:"";position:absolute;top:-4px;left:96px;width:60px;height:5px;border-radius:3px 3px 0 0;background:#2a2a2e;
+  box-shadow:72px 0 0 #2a2a2e}
+.iphone::after{content:"";position:absolute;bottom:-4px;left:150px;width:76px;height:5px;border-radius:0 0 3px 3px;background:#2a2a2e}
+.pantalla{position:relative;width:100%;height:100%;border-radius:38px;overflow:hidden;
+  background:
+    radial-gradient(circle at 15% 110%,color-mix(in srgb,var(--acento) 95%,#fff 5%),transparent 60%),
+    radial-gradient(circle at 100% -10%,color-mix(in srgb,var(--acento) 55%,#000),transparent 60%),
+    linear-gradient(135deg,color-mix(in srgb,var(--acento) 42%,#000),#050507);
+  transition:background 1.5s}
+.isla{position:absolute;left:11px;top:50%;width:21px;height:72px;margin-top:-36px;border-radius:11px;background:#000}
+/* reloj centrado en toda la pantalla */
+.reloj{position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center;
+  color:#fff;text-shadow:0 1px 8px rgba(0,0,0,.25);padding-bottom:6px}
+.reloj .candado{width:11px;height:9px;margin-bottom:7px;border:2px solid #fff;border-radius:2px;position:relative;opacity:.85}
+.reloj .candado::before{content:"";position:absolute;left:0;top:-7px;width:5px;height:6px;border:2px solid #fff;border-bottom:0;border-radius:4px 4px 0 0}
+.reloj .fecha{font:600 14px 'Inter Tight',-apple-system,sans-serif;opacity:.9;white-space:nowrap}
+.reloj .fecha::first-letter{text-transform:uppercase}
+.reloj .hora{font:700 84px/1 'Inter Tight',-apple-system,'SF Pro Display',sans-serif;letter-spacing:-3px;
+  font-variant-numeric:tabular-nums;margin-top:2px}
+.atajo{display:none}
+.barra-inicio{display:none}
+.iphone.fin .hora{letter-spacing:1px}
+
+/* =================== TOCADISCOS DE DJ (visto desde arriba) =================== */
+.tocadiscos{position:absolute;left:548px;top:318px;width:640px;height:500px;border-radius:16px;
+  background:linear-gradient(150deg,#26262b,#18181c 45%,#121215);
+  box-shadow:var(--sombra),inset 0 0 0 1.5px rgba(255,255,255,.07),inset 0 -3px 0 rgba(0,0,0,.35)}
+.tocadiscos::after{content:"";position:absolute;inset:0;border-radius:inherit;pointer-events:none;opacity:.5;
+  background:repeating-linear-gradient(90deg,rgba(255,255,255,.012) 0 1px,transparent 1px 3px)}
+
+/* Plato con puntos estroboscópicos (gira entero) */
+.plato{position:absolute;left:30px;top:22px;width:456px;height:456px;border-radius:50%;
+  box-shadow:0 0 0 3px #0b0b0d,0 6px 16px rgba(0,0,0,.6);background:#0e0e10;animation:girar 1.8s linear infinite}
+#musica.pausa .plato{animation-play-state:paused}
+.plato .puntos{position:absolute;inset:0;width:100%;height:100%}
+.plato .aro{position:absolute;inset:26px;border-radius:50%;box-shadow:0 0 0 2px #b9bec6,0 0 0 4px #0b0b0d}
+.vinilo{position:absolute;inset:30px;border-radius:50%;
+  background:
+    conic-gradient(from 0deg,transparent 0 8%,rgba(255,255,255,.16) 12%,transparent 18% 50%,rgba(255,255,255,.1) 56%,transparent 62%),
+    repeating-radial-gradient(circle,#0f0f12 0 1.5px,#1d1d22 1.5px 3px);
+  box-shadow:0 0 0 2px #050506,0 0 26px var(--acento-suave);transition:box-shadow 1.2s}
+.vinilo .etiqueta{position:absolute;inset:34%;border-radius:50%;overflow:hidden;background:var(--acento);box-shadow:0 0 0 3px #050506}
+.vinilo .etiqueta img{width:100%;height:100%;object-fit:cover}
+.vinilo .etiqueta::after{content:"";position:absolute;left:50%;top:50%;width:14px;height:14px;margin:-7px;border-radius:50%;
+  background:radial-gradient(circle at 40% 35%,#f2f2f2,#8a8a8a);box-shadow:0 1px 3px #000}
+@keyframes girar{to{transform:rotate(360deg)}}
+
+/* Luz roja del estroboscopio que ilumina los puntos */
+.estrobo{position:absolute;left:20px;top:392px;width:26px;height:26px;border-radius:50%;
+  background:radial-gradient(circle,#3a3a40,#1a1a1e);box-shadow:inset 0 2px 3px rgba(0,0,0,.6)}
+.estrobo::after{content:"";position:absolute;left:14px;top:-50px;width:80px;height:60px;border-radius:50%;
+  background:radial-gradient(ellipse,rgba(255,40,40,.55),transparent 70%);mix-blend-mode:screen;transform:rotate(-40deg)}
+#musica.pausa .estrobo::after{opacity:.25}
+
+/* Botones izquierda/abajo */
+.startstop{position:absolute;left:22px;bottom:18px;width:66px;height:52px;border-radius:5px;
+  background:linear-gradient(#2e2e34,#1c1c20);box-shadow:0 0 0 2px #0b0b0d,inset 0 1px 0 rgba(255,255,255,.08);
+  display:flex;align-items:center;justify-content:center;font:600 9px Inter,sans-serif;letter-spacing:1px;color:#9a9ca3}
+.velocidad{position:absolute;left:100px;bottom:20px;display:flex;gap:6px}
+.velocidad span{width:36px;height:22px;border-radius:4px;background:linear-gradient(#2e2e34,#1c1c20);box-shadow:0 0 0 1.5px #0b0b0d;
+  font:600 10px Inter,sans-serif;color:#9a9ca3;display:flex;align-items:center;justify-content:center;position:relative}
+.velocidad span.activo::after{content:"";position:absolute;left:50%;top:-7px;width:5px;height:5px;margin-left:-2.5px;border-radius:50%;
+  background:var(--acento);box-shadow:0 0 6px var(--acento);transition:background 1.2s}
+#musica.pausa .velocidad span.activo::after{background:#4a4a52;box-shadow:none}
+.portaadaptador{position:absolute;right:22px;top:222px;width:46px;height:46px;border-radius:50%;
+  background:radial-gradient(circle,#0c0c0e 0 30%,#2a2a30 31% 62%,#141417 63%);box-shadow:0 0 0 2px #0b0b0d}
+.diana{position:absolute;left:22px;top:22px;width:22px;height:22px;border-radius:50%;background:radial-gradient(circle,#4a4a52,#1b1b1f);box-shadow:0 0 0 2px #0b0b0d}
+
+/* Pitch (velocidad fina) a la derecha, con escala */
+.pitch{position:absolute;right:30px;bottom:24px;width:16px;height:150px;border-radius:3px;background:#0b0b0d;box-shadow:inset 0 0 0 1px #2c2c32}
+.pitch::after{content:"";position:absolute;left:-14px;top:62px;width:44px;height:22px;border-radius:4px;
+  background:linear-gradient(#45454c,#26262b);box-shadow:0 3px 4px rgba(0,0,0,.6),inset 0 1px 0 rgba(255,255,255,.15)}
+.escala{position:absolute;right:56px;bottom:24px;width:10px;height:150px;
+  background:repeating-linear-gradient(180deg,#8d9098 0 1px,transparent 1px 10px)}
+.escala::after{content:"";position:absolute;left:-6px;top:72px;width:16px;height:2px;background:#d8dbe0}
+.rango{position:absolute;right:92px;bottom:26px;width:26px;height:26px;border-radius:50%;background:linear-gradient(#2e2e34,#1c1c20);box-shadow:0 0 0 1.5px #0b0b0d}
+
+/* Brazo en S: pivote arriba a la derecha; baja al disco cuando suena */
+.base-brazo{position:absolute;left:470px;top:56px;width:132px;height:132px;border-radius:50%;
+  background:radial-gradient(circle,#2b2b31 0 40%,#151518 41% 70%,#232328 71%);box-shadow:0 0 0 2px #0b0b0d,0 4px 10px rgba(0,0,0,.5)}
+.base-brazo::after{content:"";position:absolute;inset:16px;border-radius:50%;
+  background:repeating-conic-gradient(from 0deg,#3a3a40 0 2deg,transparent 2deg 12deg);opacity:.6;
+  -webkit-mask-image:radial-gradient(circle,transparent 55%,#000 56%);mask-image:radial-gradient(circle,transparent 55%,#000 56%)}
+.reposo{position:absolute;left:520px;top:404px;width:32px;height:20px;border-radius:5px;background:#26262b;box-shadow:0 0 0 2px #0b0b0d}
+.brazo{position:absolute;left:476px;top:62px;width:120px;height:420px;transform-origin:60px 60px;transform:rotate(35deg);
+  transition:transform 1.6s cubic-bezier(.4,0,.2,1);filter:drop-shadow(6px 10px 6px rgba(0,0,0,.5))}
+#musica.pausa .brazo{transform:rotate(0deg)}
+.brazo svg{width:100%;height:100%;overflow:visible}
+
+/* =================== ÁLBUMES =================== */
+.album{position:absolute;box-shadow:var(--sombra),0 0 40px var(--acento-suave);transition:box-shadow 1.2s}
+/* chat (izquierda, recto) */
+.album-chat{left:24px;top:440px;width:470px;height:470px;overflow:hidden;border-radius:3px;
+  background:radial-gradient(circle at 85% 10%,var(--acento-suave),transparent 55%),linear-gradient(160deg,#17131f,#08070b);
+  border:2px solid color-mix(in srgb,var(--acento) 55%,#000);transition:border-color 1.2s,box-shadow 1.2s}
+.album-chat::after{content:"";position:absolute;inset:0;pointer-events:none;background:linear-gradient(115deg,rgba(255,255,255,.08),transparent 35%)}
+.album-chat .tit{position:absolute;left:24px;top:20px;right:24px;display:flex;justify-content:space-between;align-items:baseline}
+.album-chat .tit b{font:700 46px/1 'Chakra Petch',sans-serif;letter-spacing:2px;color:#fff}
+.album-chat .tit span{font:700 13px 'Chakra Petch',sans-serif;letter-spacing:4px;color:var(--acento-claro);text-transform:uppercase;transition:color 1.2s}
+.album-chat .vacio{position:absolute;left:0;right:0;top:52%;text-align:center;font-size:18px;color:rgba(201,191,228,.45)}
+body:has(#chat .msg) .vacio{display:none}
+#chat{position:absolute;left:16px;right:16px;top:86px;bottom:16px;display:flex;flex-direction:column;justify-content:flex-end;gap:7px;overflow:hidden;
+  -webkit-mask-image:linear-gradient(to bottom,transparent 0,#000 18%);mask-image:linear-gradient(to bottom,transparent 0,#000 18%)}
+.msg{flex:none;background:rgba(0,0,0,.7);border:1.5px solid var(--acento);border-radius:10px;padding:7px 12px;color:var(--texto);font-size:17px;line-height:1.3;
+  word-wrap:break-word;transition:border-color 1.2s;animation:msgEntra .45s cubic-bezier(.2,1.3,.4,1) both}
+.msg .quien{font:700 16px 'Chakra Petch',sans-serif;color:var(--acento-claro);margin-right:7px;transition:color 1.2s}
+.msg .quien .ins{display:inline-block;font:700 10px 'Chakra Petch',sans-serif;letter-spacing:1px;padding:1px 5px;margin-right:5px;border-radius:4px;
+  vertical-align:2px;color:#000;background:var(--acento);transition:background 1.2s}
+.msg img.emote{height:24px;vertical-align:middle;margin:-4px 1px}
+.msg.mencion{background:color-mix(in srgb,var(--acento) 30%,#000)}
+.msg.sale{animation:msgSale .4s forwards}
+@keyframes msgEntra{from{opacity:0;transform:translateY(14px)}to{opacity:1;transform:none}}
+@keyframes msgSale{to{opacity:0}}
+
+/* canción actual (derecha, girado como en el mockup) */
+.album-musica{left:1290px;top:481px;width:500px;height:500px;transform:rotate(15.5deg);border-radius:3px;overflow:hidden;background:#1a1520}
+.album-musica img{width:100%;height:100%;object-fit:cover;display:block}
+.album-musica::before{content:"";position:absolute;inset:0;z-index:1;pointer-events:none;
+  background:linear-gradient(115deg,rgba(255,255,255,.16),transparent 38%,transparent 70%,rgba(0,0,0,.2))}
+#musica.pausa .album-musica img{filter:saturate(.35) brightness(.7)}
+.pegatina{position:absolute;left:0;right:0;bottom:0;z-index:2;padding:14px 22px 16px;background:rgba(0,0,0,.78);border-top:3px solid var(--acento);
+  transition:border-color 1.2s}
+.pegatina .estado{font:700 13px 'Chakra Petch',sans-serif;letter-spacing:4px;color:var(--acento-claro);text-transform:uppercase;transition:color 1.2s}
+.cancion,.artista{white-space:nowrap;overflow:hidden}
+.cancion{font:700 30px/1.2 'Chakra Petch',sans-serif;color:#fff}
+.artista{font-size:19px;color:var(--suave)}
+.cancion > span,.artista > span{display:inline-block}
+.cinta > span{animation:cinta var(--dur,10s) linear infinite}
+.cinta > span i{font-style:normal;padding-right:70px}
+@keyframes cinta{from{transform:translateX(0)}to{transform:translateX(-50%)}}
+
+#depurar{display:none}
+</style>
+</head>
+<body>
+<div class="mesa"></div>
+<div class="luz"></div>
+<div class="vineta"></div>
+
+<div class="titulo" id="titulo">Empezamos en</div>
+
+<div class="iphone" id="iphone">
+  <div class="pantalla">
+    <div class="isla"></div>
+    <div class="reloj">
+      <div class="candado"></div>
+      <div class="fecha" id="fecha"></div>
+      <div class="hora" id="cuentaNum">05:00</div>
+    </div>
+    <div class="atajo izq"></div><div class="atajo der"></div>
+    <div class="barra-inicio"></div>
+  </div>
+</div>
+
+<div id="musica">
+  <div class="tocadiscos">
+    <div class="diana"></div>
+    <div class="portaadaptador"></div>
+    <div class="plato">
+      <svg class="puntos" id="puntos" viewBox="0 0 456 456"></svg>
+      <div class="aro"></div>
+      <div class="vinilo" id="vinilo"><div class="etiqueta"><img id="etiqueta" alt=""></div></div>
+    </div>
+    <div class="estrobo"></div>
+    <div class="startstop">START/STOP</div>
+    <div class="velocidad"><span class="activo">33</span><span>45</span></div>
+    <div class="rango"></div>
+    <div class="escala"></div>
+    <div class="pitch"></div>
+    <div class="base-brazo"></div>
+    <div class="reposo"></div>
+    <div class="brazo">
+      <svg viewBox="0 0 120 420">
+        <rect x="42" y="-46" width="36" height="58" rx="7" fill="#2a2a30" stroke="#0b0b0d" stroke-width="2"/>
+        <path d="M44 -36 H76 M44 -26 H76 M44 -16 H76" stroke="#45454c" stroke-width="2"/>
+        <rect x="54" y="8" width="12" height="20" fill="#3a3a40"/>
+        <circle cx="60" cy="60" r="24" fill="#33333a" stroke="#0b0b0d" stroke-width="2"/>
+        <circle cx="60" cy="60" r="10" fill="#6a6c74"/>
+        <path d="M60 60 C 62 140, 34 190, 46 250 S 66 320, 50 362" fill="none" stroke="#0b0b0d" stroke-width="11" stroke-linecap="round"/>
+        <path d="M60 60 C 62 140, 34 190, 46 250 S 66 320, 50 362" fill="none" stroke="#3b3b42" stroke-width="8" stroke-linecap="round"/>
+        <path d="M60 60 C 62 140, 34 190, 46 250 S 66 320, 50 362" fill="none" stroke="#9a9ca3" stroke-width="1.6" stroke-linecap="round" transform="translate(-2 0)"/>
+        <g transform="rotate(18 50 375)">
+          <rect x="32" y="352" width="38" height="54" rx="6" fill="#1d1d21" stroke="#5a5c63" stroke-width="2"/>
+          <rect x="40" y="378" width="22" height="22" rx="3" fill="#0e0e10"/>
+          <path d="M70 360 l14 -6" stroke="#9a9ca3" stroke-width="3" stroke-linecap="round"/>
+        </g>
+      </svg>
+    </div>
+  </div>
+
+  <div class="album album-chat">
+    <div class="tit"><b>CHAT</b></div>
+    <div class="vacio">Escribe algo en el chat</div>
+    <div id="chat"></div>
+  </div>
+
+  <div class="album album-musica">
+    <img id="portada" alt="">
+    <div class="pegatina">
+      <div class="estado" id="estado">Sonando ahora</div>
+      <div class="cancion" id="cancion"><span></span></div>
+      <div class="artista" id="artista"><span></span></div>
+    </div>
+  </div>
+</div>
+
+<div id="depurar"></div>
+
+<script>
+
+/* ===== CONFIGURACIÓN =====
+   1. En Cider: Ajustes → Conexiones → activa el scrobbling de Last.fm e inicia sesión.
+   2. Crea una API key gratis en https://www.last.fm/api/account/create
+   3. Rellena estas dos líneas: */
+const LASTFM_USUARIO = "XERRUG";   // tu nombre de usuario de Last.fm
+const LASTFM_API_KEY = "b3736756a13f3e161f42327a3a1d6d6f";   // la "API key" (NO el "shared secret")
+
+const CADA_MS = 8000;        // cada cuánto mira qué suena
+const DEPURAR = false;        // true = muestra abajo a la izquierda qué falla. Cuando funcione, ponlo en false.
+
+const $ = (id) => document.getElementById(id);
+let ultimaCancion = "", duracionMs = 0, inicioCancion = 0, estabaParado = false;
+const MARGEN_MS = 20000;   // tiempo extra antes de dar la canción por pausada
+
+function aviso(texto){
+  const el = $('depurar');
+  if (!DEPURAR || !texto){ el.style.display = 'none'; return; }
+  el.style.display = 'block'; el.textContent = 'AVISO: ' + texto;
+}
+
+function ponerTexto(el, texto){
+  if (el.dataset.texto === texto) return;
+  el.dataset.texto = texto;
+  const span = el.querySelector('span');
+  el.classList.remove('cinta');
+  span.textContent = texto;
+  requestAnimationFrame(() => {
+    if (span.scrollWidth <= el.clientWidth) return;     // cabe: se queda quieto
+    const seguro = texto.replace(/[&<>]/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;' }[c]));
+    span.innerHTML = `<i>${seguro}</i><i>${seguro}</i>`; // dos copias seguidas = vuelta infinita sin saltos
+    const ancho = span.scrollWidth / 2;
+    el.style.setProperty('--dur', `${Math.max(6, ancho / 45)}s`); // ~45 px por segundo
+    el.classList.add('cinta');
+  });
+}
+
+/* Portada en buena calidad desde Apple Music (búsqueda pública de iTunes, vía JSONP) */
+function portadaApple(cancion, artista){
+  return new Promise((resolver) => {
+    const cb = 'itunes_' + Date.now();
+    const s = document.createElement('script');
+    const fin = (url, dur = 0) => { delete window[cb]; s.remove(); resolver({ url, dur }); };
+    window[cb] = (r) => {
+      const t = r && r.results && r.results[0];
+      fin(t && t.artworkUrl100 ? t.artworkUrl100.replace('100x100bb', '600x600bb') : '', (t && t.trackTimeMillis) || 0);
+    };
+    s.onerror = () => fin('');
+    setTimeout(() => window[cb] && fin(''), 5000);
+    s.src = 'https://itunes.apple.com/search?entity=song&limit=1&country=es&callback=' + cb +
+            '&term=' + encodeURIComponent(artista + ' ' + cancion);
+    document.body.appendChild(s);
+  });
+}
+
+async function actualizar(){
+  const caja = $('musica');
+  if (!LASTFM_USUARIO || !LASTFM_API_KEY){
+    parado();
+    aviso('Falta poner tu usuario y tu API key de Last.fm en el archivo (líneas LASTFM_USUARIO y LASTFM_API_KEY).');
+    return;
+  }
+  try {
+    const url = 'https://ws.audioscrobbler.com/2.0/?method=user.getrecenttracks&limit=1&format=json' +
+                '&user=' + encodeURIComponent(LASTFM_USUARIO) + '&api_key=' + encodeURIComponent(LASTFM_API_KEY);
+    const j = await (await fetch(url, { cache: 'no-store' })).json();
+    if (j.error){ parado(); aviso('Last.fm dice: ' + j.message + ' (revisa el usuario y la API key).'); return; }
+
+    const lista = j.recenttracks && j.recenttracks.track;
+    const t = Array.isArray(lista) ? lista[0] : lista;
+    const sonando = t && t['@attr'] && t['@attr'].nowplaying === 'true';
+    if (!sonando){
+      parado();
+      aviso('Conectado con Last.fm, pero ahora mismo no marca nada sonando. Pon música en Cider y comprueba que el scrobbling está activado.');
+      return;
+    }
+
+    const cancion = t.name, artista = (t.artist && (t.artist['#text'] || t.artist.name)) || '';
+    const id = cancion + '|' + artista;
+    if (id !== ultimaCancion){
+      ultimaCancion = id;
+      const apple = await portadaApple(cancion, artista);
+      let portada = apple.url;
+      duracionMs = apple.dur; inicioCancion = Date.now();
+      if (!portada){
+        const imgs = t.image || [];
+        portada = (imgs[imgs.length - 1] || {})['#text'] || '';
+        if (portada.includes('2a96cbd8b46e442fc41c2b86b821562f')) portada = ''; // estrella gris = sin portada
+      }
+      const img = portada || SIN_PORTADA;
+      $('portada').src = img; $('etiqueta').src = img;
+      if (portada) colorDePortada(portada); else ponerAcento();
+      const v = $('vinilo'); v.style.animation = 'none'; void v.offsetWidth; v.style.animation = '';
+    }
+    if (estabaParado){ inicioCancion = Date.now(); estabaParado = false; } // vuelve a sonar tras una pausa
+    ponerTexto($('cancion'), cancion);
+    ponerTexto($('artista'), artista);
+    caja.classList.remove('oculto');
+    const pasada = duracionMs && (Date.now() - inicioCancion > duracionMs + MARGEN_MS);
+    caja.classList.toggle('pausa', !!pasada);
+    $('estado').textContent = pasada ? 'En pausa' : 'Sonando ahora';
+    aviso('');
+  } catch (e) {
+    parado();
+    aviso('No consigo conectar con Last.fm. ¿Hay internet?');
+  }
+}
+
+
+/* Estado "sin música": el reproductor se queda visible pero parado */
+const SIN_PORTADA = 'data:image/svg+xml,' + encodeURIComponent('<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100"><defs><linearGradient id="g" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#1c1430"/><stop offset="1" stop-color="#0b0816"/></linearGradient></defs><rect width="100" height="100" fill="url(#g)"/></svg>');
+function parado(){
+  const caja = $('musica');
+  caja.classList.remove('oculto');
+  caja.classList.add('pausa');
+  estabaParado = true;
+  $('estado').textContent = ultimaCancion ? 'En pausa' : 'Sin música';
+  if (!ultimaCancion){                       // nunca ha sonado nada todavía
+    $('portada').src = SIN_PORTADA; $('etiqueta').src = SIN_PORTADA;
+    ponerTexto($('cancion'), 'Nada sonando');
+    ponerTexto($('artista'), 'Pon algo de música');
+  }
+}
+
+/* Color del borde según la portada */
+function colorDePortada(url){
+  const img = new Image();
+  img.crossOrigin = 'anonymous';
+  img.onload = () => {
+    try {
+      const c = document.createElement('canvas'); c.width = c.height = 32;
+      const x = c.getContext('2d'); x.drawImage(img, 0, 0, 32, 32);
+      const d = x.getImageData(0, 0, 32, 32).data;
+      let r = 0, g = 0, b = 0, peso = 0;
+      for (let i = 0; i < d.length; i += 4){
+        const R = d[i], G = d[i+1], B = d[i+2];
+        const max = Math.max(R, G, B), min = Math.min(R, G, B);
+        const sat = max ? (max - min) / max : 0, luz = max / 255;
+        const w = Math.pow(sat, 2) * (luz > .15 ? 1 : .1) + .002;  // premia los colores vivos
+        r += R * w; g += G * w; b += B * w; peso += w;
+      }
+      ponerAcento(r / peso, g / peso, b / peso);
+    } catch (_) { ponerAcento(); }
+  };
+  img.onerror = () => ponerAcento();
+  img.src = url;
+}
+function ponerAcento(r, g, b){
+  const caja = document.documentElement;   // el color se aplica a todo: reproductor y chat
+  if (r === undefined){ caja.style.removeProperty('--acento'); caja.style.removeProperty('--acento-suave'); caja.style.removeProperty('--acento-claro'); return; }
+  // a HSL para que el color siempre se vea bien sobre negro
+  r /= 255; g /= 255; b /= 255;
+  const max = Math.max(r, g, b), min = Math.min(r, g, b), l = (max + min) / 2;
+  let h = 0, s = 0;
+  if (max !== min){
+    const d = max - min; s = l > .5 ? d / (2 - max - min) : d / (max + min);
+    h = max === r ? (g - b) / d + (g < b ? 6 : 0) : max === g ? (b - r) / d + 2 : (r - g) / d + 4; h *= 60;
+  }
+  if (s < .12){ ponerAcento(); return; }      // portada en blanco y negro → lila de siempre
+  const S = Math.max(s, .65) * 100;
+  caja.style.setProperty('--acento', `hsl(${h} ${S}% 62%)`);
+  caja.style.setProperty('--acento-suave', `hsl(${h} ${S}% 55% / .45)`);
+  caja.style.setProperty('--acento-claro', `hsl(${h} ${S}% 85%)`);
+}
+
+aviso('Conectando con Last.fm…');
+actualizar();
+setInterval(actualizar, CADA_MS);
+
+/* =====================================================================
+   CHAT DE TWITCH (solo lectura, sin contraseña)
+   ===================================================================== */
+const CANAL_TWITCH = "franchu_ga";
+const CHAT_MAX = 10;                                  // mensajes como máximo en pantalla
+const CHAT_OCULTAR_TRAS = 0;                         // segundos hasta que un mensaje desaparece (0 = nunca)
+const CHAT_BOTS = ["streamelements", "nightbot", "moobot", "streamlabs"];
+const CHAT_OCULTAR_COMANDOS = true;                  // ocultar mensajes que empiezan por "!"
+
+const escaparHTML = (t) => t.replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
+
+function leerTags(raw){
+  const tags = {};
+  raw.split(';').forEach((p) => { const i = p.indexOf('='); tags[p.slice(0, i)] = p.slice(i + 1).replace(/\\s/g, ' '); });
+  return tags;
+}
+
+// Sustituye los emotes de Twitch por sus imágenes
+function textoConEmotes(texto, emotesTag){
+  const letras = Array.from(texto);              // Twitch cuenta por caracteres Unicode
+  if (!emotesTag) return escaparHTML(texto);
+  const trozos = [];
+  emotesTag.split('/').forEach((e) => {
+    const [id, pos] = e.split(':');
+    pos.split(',').forEach((r) => { const [a, b] = r.split('-').map(Number); trozos.push({ id, a, b }); });
+  });
+  trozos.sort((x, y) => x.a - y.a);
+  let html = '', i = 0;
+  for (const t of trozos){
+    html += escaparHTML(letras.slice(i, t.a).join(''));
+    html += `<img class="emote" src="https://static-cdn.jtvnw.net/emoticons/v2/${t.id}/default/dark/2.0" alt="">`;
+    i = t.b + 1;
+  }
+  return html + escaparHTML(letras.slice(i).join(''));
+}
+
+function insignias(badges){
+  const t = [];
+  if (/broadcaster/.test(badges)) t.push('STREAMER');
+  else if (/moderator/.test(badges)) t.push('MOD');
+  if (/vip/.test(badges)) t.push('VIP');
+  if (/subscriber|founder/.test(badges)) t.push('SUB');
+  return t.map((x) => `<span class="ins">${x}</span>`).join('');
+}
+
+function añadirMensaje({ id, usuario, nombre, html, mencion }){
+  const chat = $('chat');
+  const el = document.createElement('div');
+  el.className = 'msg' + (mencion ? ' mencion' : '');
+  el.dataset.id = id || ''; el.dataset.usuario = usuario;
+  el.innerHTML = `<span class="quien">${nombre}</span>${html}`;
+  chat.appendChild(el);
+  while (chat.children.length > CHAT_MAX) chat.firstElementChild.remove();
+  if (CHAT_OCULTAR_TRAS > 0) setTimeout(() => { el.classList.add('sale'); setTimeout(() => el.remove(), 400); }, CHAT_OCULTAR_TRAS * 1000);
+}
+
+function procesarIRC(linea){
+  let tags = {}, resto = linea;
+  if (resto.startsWith('@')){ const sp = resto.indexOf(' '); tags = leerTags(resto.slice(1, sp)); resto = resto.slice(sp + 1); }
+
+  const m = resto.match(/^:(\w+)!\S+ PRIVMSG #\w+ :(.*)$/);
+  if (m){
+    const usuario = m[1].toLowerCase(); let texto = m[2];
+    if (texto.startsWith('\u0001ACTION ')) texto = texto.slice(8, -1);   // mensajes /me
+    if (CHAT_BOTS.includes(usuario)) return;
+    if (CHAT_OCULTAR_COMANDOS && texto.startsWith('!')) return;
+    añadirMensaje({
+      id: tags.id, usuario,
+      nombre: insignias(tags.badges || '') + escaparHTML(tags['display-name'] || usuario),
+      html: textoConEmotes(texto, tags.emotes),
+      mencion: texto.toLowerCase().includes('@' + CANAL_TWITCH.toLowerCase())
+    });
+    return;
+  }
+  // Moderación: mensaje borrado, usuario baneado/timeout o chat limpiado
+  if (/ CLEARMSG /.test(resto) && tags['target-msg-id']) document.querySelectorAll(`#chat .msg[data-id="${tags['target-msg-id']}"]`).forEach((e) => e.remove());
+  const cc = resto.match(/ CLEARCHAT #\w+(?: :(\w+))?/);
+  if (cc){
+    if (cc[1]) document.querySelectorAll(`#chat .msg[data-usuario="${cc[1].toLowerCase()}"]`).forEach((e) => e.remove());
+    else $('chat').innerHTML = '';
+  }
+}
+
+function conectarChat(){
+  const ws = new WebSocket('wss://irc-ws.chat.twitch.tv:443');
+  ws.onopen = () => {
+    ws.send('CAP REQ :twitch.tv/tags twitch.tv/commands');
+    ws.send('NICK justinfan' + Math.floor(10000 + Math.random() * 80000));   // usuario anónimo de solo lectura
+    ws.send('JOIN #' + CANAL_TWITCH.toLowerCase());
+  };
+  ws.onmessage = (e) => e.data.split('\r\n').forEach((l) => {
+    if (!l) return;
+    if (l.startsWith('PING')) ws.send('PONG :tmi.twitch.tv'); else procesarIRC(l);
+  });
+  ws.onclose = () => setTimeout(conectarChat, 3000);     // se reconecta solo
+}
+conectarChat();
+
+/* ---------- Cuenta atrás en el iPhone: ?min=5 en la URL ---------- */
+(function(){
+  const q = new URLSearchParams(location.search);
+  const minutos = q.has('min') ? Number(q.get('min')) : 5;
+  if (q.get('texto')) $('titulo').textContent = q.get('texto');
+  $('fecha').textContent = new Date().toLocaleDateString('es-ES', { weekday: 'long', day: 'numeric', month: 'long' });
+  const total = Math.max(1, minutos) * 60000, fin = Date.now() + total;
+  (function tick(){
+    const r = Math.max(0, fin - Date.now()), s = Math.ceil(r / 1000);
+    if (r <= 0){ $('cuentaNum').textContent = 'YA'; $('iphone').classList.add('fin'); return; }
+    $('cuentaNum').textContent = String(Math.floor(s / 60)).padStart(2, '0') + ':' + String(s % 60).padStart(2, '0');
+    setTimeout(tick, 250);
+  })();
+})();
+
+/* ---------- Puntos estroboscópicos del plato ---------- */
+(function(){
+  const svg = $('puntos'); let h = '';
+  [[207, 140], [212, 144], [217, 148], [222, 152]].forEach(([r, n]) => {
+    for (let i = 0; i < n; i++){ const a = i / n * Math.PI * 2;
+      h += `<circle cx="${(228 + r * Math.cos(a)).toFixed(1)}" cy="${(228 + r * Math.sin(a)).toFixed(1)}" r="1.7" fill="#c9ccd2"/>`; }
+  });
+  svg.innerHTML = h;
+})();
+</script>
+</body>
+</html>
