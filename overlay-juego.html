@@ -2,7 +2,7 @@
 <html lang="es">
 <head>
 <meta charset="utf-8">
-<title>Juego (reproductor Cider) · franchu_ga</title>
+<title>Juego (reproductor vía Last.fm) · franchu_ga</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Chakra+Petch:wght@600;700&family=Inter:wght@500;600&display=swap" rel="stylesheet">
@@ -48,26 +48,25 @@ html,body{width:1920px;height:1080px;overflow:hidden;background:transparent;font
     <div class="cabecera"><div class="ondas"><i></i><i></i><i></i><i></i></div><span id="estado">Sonando ahora</span></div>
     <div class="cancion" id="cancion"><span></span></div>
     <div class="artista" id="artista"><span></span></div>
-    <div class="barra"><div id="progreso"></div></div>
+    
   </div>
 </div>
 
 <div id="depurar"></div>
 
-<script src="https://cdn.jsdelivr.net/npm/socket.io-client@4.8.1/dist/socket.io.min.js"></script>
 <script>
 /* ===== CONFIGURACIÓN =====
-   En Cider 4: Ajustes → Conexiones → "API de WebSockets" activada (puerto 10767).
-   TOKEN: normalmente no hace falta. Solo si Cider lo pide, créalo en
-   Conexiones → "Gestionar el acceso de aplicaciones externas a Cider" y pégalo aquí. */
-const TOKEN = "";
-const PUERTO = 10767;
-const OCULTAR_EN_PAUSA = false; // true = el reproductor se esconde al pausar
-const DEPURAR = true;           // true = muestra abajo a la izquierda qué falla. Cuando funcione, ponlo en false.
+   1. En Cider: Ajustes → Conexiones → activa el scrobbling de Last.fm e inicia sesión.
+   2. Crea una API key gratis en https://www.last.fm/api/account/create
+   3. Rellena estas dos líneas: */
+const LASTFM_USUARIO = "";   // tu nombre de usuario de Last.fm
+const LASTFM_API_KEY = "";   // la "API key" (NO el "shared secret")
 
-const HOSTS = ["localhost", "127.0.0.1", "[::1]"];
+const CADA_MS = 8000;        // cada cuánto mira qué suena
+const DEPURAR = true;        // true = muestra abajo a la izquierda qué falla. Cuando funcione, ponlo en false.
+
 const $ = (id) => document.getElementById(id);
-let ultimaCancion = "", estado = { info: null, sonando: false, actual: 0, total: 0 };
+let ultimaCancion = "";
 
 function aviso(texto){
   const el = $('depurar');
@@ -82,7 +81,7 @@ function ponerTexto(el, texto){
   el.classList.remove('desliza');
   requestAnimationFrame(() => {
     const sobra = span.scrollWidth - el.clientWidth;
-    if (sobra > 0){
+    if (sobra > 0){                       // si no cabe, el texto se desliza
       el.style.setProperty('--dist', `-${sobra + 10}px`);
       el.style.setProperty('--dur', `${Math.max(8, sobra / 25)}s`);
       el.classList.add('desliza');
@@ -90,117 +89,71 @@ function ponerTexto(el, texto){
   });
 }
 
-/* ---------- Pintar ---------- */
-function pintar(){
-  const caja = $('musica'), info = estado.info;
-  if (!info || !info.name){ caja.classList.add('oculto'); return; }
-  const id = info.name + '|' + info.artistName;
-  if (id !== ultimaCancion){
-    ultimaCancion = id;
-    const url = (info.artwork && info.artwork.url || '').replace('{w}', 300).replace('{h}', 300);
-    if (url) $('portada').src = url;
+/* Portada en buena calidad desde Apple Music (búsqueda pública de iTunes, vía JSONP) */
+function portadaApple(cancion, artista){
+  return new Promise((resolver) => {
+    const cb = 'itunes_' + Date.now();
+    const s = document.createElement('script');
+    const fin = (url) => { delete window[cb]; s.remove(); resolver(url); };
+    window[cb] = (r) => {
+      const t = r && r.results && r.results[0];
+      fin(t && t.artworkUrl100 ? t.artworkUrl100.replace('100x100bb', '600x600bb') : '');
+    };
+    s.onerror = () => fin('');
+    setTimeout(() => window[cb] && fin(''), 5000);
+    s.src = 'https://itunes.apple.com/search?entity=song&limit=1&country=es&callback=' + cb +
+            '&term=' + encodeURIComponent(artista + ' ' + cancion);
+    document.body.appendChild(s);
+  });
+}
+
+async function actualizar(){
+  const caja = $('musica');
+  if (!LASTFM_USUARIO || !LASTFM_API_KEY){
+    caja.classList.add('oculto');
+    aviso('Falta poner tu usuario y tu API key de Last.fm en el archivo (líneas LASTFM_USUARIO y LASTFM_API_KEY).');
+    return;
   }
-  ponerTexto($('cancion'), info.name);
-  ponerTexto($('artista'), info.artistName || '');
-  $('progreso').style.width = estado.total ? Math.min(100, estado.actual / estado.total * 100) + '%' : '0';
-  caja.classList.toggle('pausa', !estado.sonando);
-  $('estado').textContent = estado.sonando ? 'Sonando ahora' : 'En pausa';
-  caja.classList.toggle('oculto', !estado.sonando && OCULTAR_EN_PAUSA);
-}
+  try {
+    const url = 'https://ws.audioscrobbler.com/2.0/?method=user.getrecenttracks&limit=1&format=json' +
+                '&user=' + encodeURIComponent(LASTFM_USUARIO) + '&api_key=' + encodeURIComponent(LASTFM_API_KEY);
+    const j = await (await fetch(url, { cache: 'no-store' })).json();
+    if (j.error){ caja.classList.add('oculto'); aviso('Last.fm dice: ' + j.message + ' (revisa el usuario y la API key).'); return; }
 
-function ponerCancion(item){
-  if (!item) return;
-  const a = item.attributes || item;           // Cider a veces lo manda dentro de "attributes"
-  if (!a.name) return;
-  estado.info = a;
-  if (a.durationInMillis) estado.total = a.durationInMillis / 1000;
-  if (typeof a.currentPlaybackTime === 'number') estado.actual = a.currentPlaybackTime;
-  actualizarAviso && actualizarAviso();
-  pintar();
-}
-
-// El progreso avanza solo entre mensajes
-setInterval(() => { if (estado.sonando && estado.total){ estado.actual = Math.min(estado.total, estado.actual + 1); pintar(); } }, 1000);
-
-/* ---------- Vía 1: Socket.io (eventos en tiempo real) ---------- */
-let socket = null, hostIdx = 0, conectadoSocket = false, okREST = false, ultimoError = '';
-
-function conectar(){
-  if (typeof io === 'undefined'){ aviso('No se ha podido cargar la librería de conexión (¿sin internet?).'); return; }
-  const host = HOSTS[hostIdx % HOSTS.length];
-  socket = io(`http://${host}:${PUERTO}/`, {
-    transports: ['polling', 'websocket'],   // primero HTTP normal, luego intenta mejorar a WebSocket
-    reconnection: false, timeout: 8000,
-    query: TOKEN ? { token: TOKEN, apptoken: TOKEN } : undefined
-  });
-
-  socket.on('connect', () => { conectadoSocket = true; actualizarAviso(); });
-
-  socket.on('API:Playback', (msg) => {
-    if (!msg || !msg.data) return;
-    const { type, data } = msg;
-    switch (type){
-      case 'playbackStatus.nowPlayingItemDidChange':
-        estado.actual = 0; ponerCancion(data); break;
-      case 'playbackStatus.playbackStateDidChange':
-        estado.sonando = data.state === 'playing' || data.state === 2;
-        ponerCancion(data.attributes || data); pintar(); break;
-      case 'playbackStatus.playbackTimeDidChange':
-        if (typeof data.currentPlaybackTime === 'number') estado.actual = data.currentPlaybackTime;
-        if (data.currentPlaybackDuration) estado.total = data.currentPlaybackDuration;
-        if (typeof data.isPlaying === 'boolean') estado.sonando = data.isPlaying;
-        pintar(); break;
-    }
-  });
-
-  const fallo = (err) => {
-    conectadoSocket = false;
-    if (err && err.message) ultimoError = err.message;
-    try { socket.close(); } catch (_) {}
-    hostIdx++;
-    actualizarAviso();
-    setTimeout(conectar, hostIdx % HOSTS.length === 0 ? 5000 : 500);
-  };
-  socket.on('connect_error', fallo);
-  socket.on('disconnect', () => fallo());
-}
-
-/* ---------- Vía 2: preguntar a la API cada 3 segundos ---------- */
-async function leerREST(){
-  for (const host of HOSTS){
-    try {
-      const h = TOKEN ? { apptoken: TOKEN } : {};
-      const r = await fetch(`http://${host}:${PUERTO}/api/v1/playback/now-playing`, { headers: h, cache: 'no-store' });
-      if (r.status === 401 || r.status === 403){ ultimoError = 'Cider pide token'; continue; }
-      if (!r.ok) continue;
-      const j = await r.json();
-      okREST = true;
-      if (j.info){
-        if (typeof j.info.currentPlaybackTime === 'number') estado.actual = j.info.currentPlaybackTime;
-        ponerCancion(j.info);
-        try {
-          const e = await (await fetch(`http://${host}:${PUERTO}/api/v1/playback/is-playing`, { headers: h, cache: 'no-store' })).json();
-          if (typeof e.is_playing === 'boolean'){ estado.sonando = e.is_playing; pintar(); }
-        } catch (_) {}
-      }
-      actualizarAviso();
+    const lista = j.recenttracks && j.recenttracks.track;
+    const t = Array.isArray(lista) ? lista[0] : lista;
+    const sonando = t && t['@attr'] && t['@attr'].nowplaying === 'true';
+    if (!sonando){
+      caja.classList.add('oculto');
+      aviso('Conectado con Last.fm, pero ahora mismo no marca nada sonando. Pon música en Cider y comprueba que el scrobbling está activado.');
       return;
-    } catch (_) { /* probamos el siguiente host */ }
+    }
+
+    const cancion = t.name, artista = (t.artist && (t.artist['#text'] || t.artist.name)) || '';
+    const id = cancion + '|' + artista;
+    if (id !== ultimaCancion){
+      ultimaCancion = id;
+      let portada = await portadaApple(cancion, artista);
+      if (!portada){
+        const imgs = t.image || [];
+        portada = (imgs[imgs.length - 1] || {})['#text'] || '';
+        if (portada.includes('2a96cbd8b46e442fc41c2b86b821562f')) portada = ''; // estrella gris = sin portada
+      }
+      $('portada').src = portada || 'data:image/svg+xml,' + encodeURIComponent('<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100"><rect width="100" height="100" fill="#2a1650"/><text x="50" y="66" font-size="48" text-anchor="middle">🎵</text></svg>');
+    }
+    ponerTexto($('cancion'), cancion);
+    ponerTexto($('artista'), artista);
+    caja.classList.remove('pausa', 'oculto');
+    aviso('');
+  } catch (e) {
+    caja.classList.add('oculto');
+    aviso('No consigo conectar con Last.fm. ¿Hay internet?');
   }
-  okREST = false;
-  actualizarAviso();
 }
 
-function actualizarAviso(){
-  if (estado.info && estado.info.name && (conectadoSocket || okREST)){ aviso(''); return; }
-  if (conectadoSocket || okREST){ aviso('Conectado con Cider (' + (conectadoSocket ? 'eventos' : 'API') + '). Dale a pausa y play o cambia de canción.'); return; }
-  aviso('No consigo conectar con Cider en el puerto ' + PUERTO + '. Reintentando… ' + (ultimoError ? '[' + ultimoError + ']' : ''));
-}
-
-aviso('Conectando con Cider…');
-conectar();
-leerREST();
-setInterval(leerREST, 3000);
+aviso('Conectando con Last.fm…');
+actualizar();
+setInterval(actualizar, CADA_MS);
 </script>
 </body>
 </html>
