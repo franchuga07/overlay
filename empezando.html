@@ -39,11 +39,12 @@ html,body{width:1920px;height:1080px;overflow:hidden;background:#111;font-family
 .vineta{position:absolute;inset:0;background:radial-gradient(ellipse at 50% 50%,transparent 55%,rgba(0,0,0,.55))}
 
 /* =================== TÍTULO =================== */
-.titulo{position:absolute;left:50%;top:120px;transform:translateX(-50%);text-align:center;white-space:nowrap;font:600 70px/1 'Inter Tight',sans-serif;letter-spacing:5px;text-transform:uppercase;color:#fff;
+.cabecera{position:absolute;left:50%;top:60px;transform:translateX(-50%);display:flex;align-items:center;gap:44px}
+.titulo{white-space:nowrap;font:600 70px/1 'Inter Tight',sans-serif;letter-spacing:5px;text-transform:uppercase;color:#fff;
   text-shadow:0 4px 0 rgba(0,0,0,.5),0 0 30px var(--acento-suave);transition:text-shadow 1.2s}
 
 /* =================== iPHONE en horizontal (cuenta atrás) =================== */
-.iphone{position:absolute;left:1320px;top:60px;width:410px;height:190px;border-radius:46px;padding:8px;
+.iphone{position:relative;flex:none;width:410px;height:190px;border-radius:46px;padding:8px;
   background:linear-gradient(135deg,#3b3b40,#121214 40%,#1d1d21);box-shadow:var(--sombra),inset 0 0 0 2px #4a4a50}
 /* botones (en horizontal quedan arriba y abajo) */
 .iphone::before{content:"";position:absolute;top:-4px;left:96px;width:60px;height:5px;border-radius:3px 3px 0 0;background:#2a2a2e;
@@ -135,6 +136,7 @@ html,body{width:1920px;height:1080px;overflow:hidden;background:#111;font-family
 #musica.pausa .brazo{transform:rotate(0deg)}
 .brazo svg{width:100%;height:100%;overflow:visible}
 
+
 /* =================== ÁLBUMES =================== */
 .album{position:absolute;box-shadow:var(--sombra),0 0 40px var(--acento-suave);transition:box-shadow 1.2s}
 /* chat (izquierda, recto) */
@@ -166,7 +168,7 @@ body:has(#chat .msg) .vacio{display:none}
 .album-musica::before{content:"";position:absolute;inset:0;z-index:1;pointer-events:none;
   background:linear-gradient(115deg,rgba(255,255,255,.16),transparent 38%,transparent 70%,rgba(0,0,0,.2))}
 #musica.pausa .album-musica img{filter:saturate(.35) brightness(.7)}
-.pegatina{position:absolute;left:0;right:0;bottom:0;z-index:2;padding:14px 22px 16px;background:rgba(0,0,0,.78);border-top:3px solid var(--acento);
+.pegatina{display:none;position:absolute;left:0;right:0;bottom:0;z-index:2;padding:14px 22px 16px;background:rgba(0,0,0,.78);border-top:3px solid var(--acento);
   transition:border-color 1.2s}
 .pegatina .estado{font:700 13px 'Chakra Petch',sans-serif;letter-spacing:4px;color:var(--acento-claro);text-transform:uppercase;transition:color 1.2s}
 .cancion,.artista{white-space:nowrap;overflow:hidden}
@@ -185,6 +187,8 @@ body:has(#chat .msg) .vacio{display:none}
 <div class="luz"></div>
 <div class="vineta"></div>
 
+
+<div class="cabecera">
 <div class="titulo" id="titulo">Empezamos en</div>
 
 <div class="iphone" id="iphone">
@@ -198,6 +202,7 @@ body:has(#chat .msg) .vacio{display:none}
     <div class="atajo izq"></div><div class="atajo der"></div>
     <div class="barra-inicio"></div>
   </div>
+</div>
 </div>
 
 <div id="musica">
