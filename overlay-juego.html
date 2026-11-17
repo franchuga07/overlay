@@ -1,0 +1,191 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<title>Juego (reproductor Cider) · franchu_ga</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Chakra+Petch:wght@600;700&family=Inter:wght@500;600&display=swap" rel="stylesheet">
+<style>
+/* Fondo TRANSPARENTE: pon esta fuente encima del juego en OBS (1920x1080).
+   El contador de subs (arriba a la izquierda) es el widget de StreamElements "meta-subs". */
+:root{--morado:#8b5cf6;--lila:#c4b5fd;--rosa:#e879f9;--texto:#f5f3ff;--suave:#a79bd0}
+*{box-sizing:border-box;margin:0;padding:0}
+html,body{width:1920px;height:1080px;overflow:hidden;background:transparent;font-family:Inter,system-ui,sans-serif;color:var(--texto)}
+
+/* ---------- Reproductor (arriba a la derecha) ---------- */
+#musica{position:absolute;top:38px;right:38px;width:520px;height:132px;display:flex;align-items:center;gap:18px;padding:14px;
+  background:#000;border:3px solid var(--morado);border-radius:18px;box-shadow:0 0 28px rgba(139,92,246,.45);
+  transition:opacity .6s,transform .6s cubic-bezier(.2,1.2,.3,1)}
+#musica.oculto{opacity:0;transform:translateX(120px)}
+.portada{position:relative;flex:0 0 100px;height:100px;border-radius:12px;overflow:hidden;background:#1a1030}
+.portada img{width:100%;height:100%;object-fit:cover;display:block}
+#musica.pausa .portada img{filter:grayscale(.8) brightness(.6)}
+.info{flex:1;min-width:0;display:flex;flex-direction:column;gap:4px}
+.cabecera{display:flex;align-items:center;gap:8px;font:700 14px 'Chakra Petch',sans-serif;letter-spacing:3px;color:var(--lila);text-transform:uppercase}
+.ondas{display:flex;align-items:flex-end;gap:3px;height:14px}
+.ondas i{width:3px;background:var(--rosa);border-radius:2px;animation:onda .9s ease-in-out infinite}
+.ondas i:nth-child(2){animation-delay:-.3s}.ondas i:nth-child(3){animation-delay:-.6s}.ondas i:nth-child(4){animation-delay:-.15s}
+#musica.pausa .ondas i{animation:none;height:3px}
+@keyframes onda{0%,100%{height:3px}50%{height:14px}}
+.cancion,.artista{white-space:nowrap;overflow:hidden}
+.cancion{font:700 26px/1.2 'Chakra Petch',sans-serif}
+.artista{font-size:18px;color:var(--suave)}
+.cancion span,.artista span{display:inline-block;padding-right:60px}
+.desliza span{animation:deslizar var(--dur,10s) linear infinite}
+@keyframes deslizar{0%,15%{transform:translateX(0)}85%,100%{transform:translateX(var(--dist))}}
+.barra{height:5px;border-radius:3px;background:rgba(196,181,253,.18);margin-top:6px;overflow:hidden}
+.barra div{height:100%;width:0;background:linear-gradient(90deg,var(--morado),var(--rosa));transition:width 1s linear}
+#depurar{position:absolute;left:40px;bottom:40px;max-width:900px;padding:14px 20px;border-radius:12px;background:rgba(0,0,0,.85);
+  border:2px solid #f59e0b;color:#fde68a;font:600 22px/1.4 Inter,sans-serif;display:none}
+</style>
+</head>
+<body>
+
+<div id="musica" class="oculto">
+  <div class="portada"><img id="portada" alt=""></div>
+  <div class="info">
+    <div class="cabecera"><div class="ondas"><i></i><i></i><i></i><i></i></div><span id="estado">Sonando ahora</span></div>
+    <div class="cancion" id="cancion"><span></span></div>
+    <div class="artista" id="artista"><span></span></div>
+    <div class="barra"><div id="progreso"></div></div>
+  </div>
+</div>
+
+<div id="depurar"></div>
+
+<script src="https://cdn.jsdelivr.net/npm/socket.io-client@4.8.1/dist/socket.io.min.js"></script>
+<script>
+/* ===== CONFIGURACIÓN =====
+   En Cider 4: Ajustes → Conexiones → "API de WebSockets" activada (puerto 10767).
+   TOKEN: normalmente no hace falta. Solo si Cider lo pide, créalo en
+   Conexiones → "Gestionar el acceso de aplicaciones externas a Cider" y pégalo aquí. */
+const TOKEN = "";
+const PUERTO = 10767;
+const OCULTAR_EN_PAUSA = false; // true = el reproductor se esconde al pausar
+const DEPURAR = true;           // true = muestra abajo a la izquierda qué falla. Cuando funcione, ponlo en false.
+
+const HOSTS = ["localhost", "127.0.0.1", "[::1]"];
+const $ = (id) => document.getElementById(id);
+let ultimaCancion = "", estado = { info: null, sonando: false, actual: 0, total: 0 };
+
+function aviso(texto){
+  const el = $('depurar');
+  if (!DEPURAR || !texto){ el.style.display = 'none'; return; }
+  el.style.display = 'block'; el.textContent = '⚠ ' + texto;
+}
+
+function ponerTexto(el, texto){
+  const span = el.querySelector('span');
+  if (span.textContent === texto) return;
+  span.textContent = texto;
+  el.classList.remove('desliza');
+  requestAnimationFrame(() => {
+    const sobra = span.scrollWidth - el.clientWidth;
+    if (sobra > 0){
+      el.style.setProperty('--dist', `-${sobra + 10}px`);
+      el.style.setProperty('--dur', `${Math.max(8, sobra / 25)}s`);
+      el.classList.add('desliza');
+    }
+  });
+}
+
+/* ---------- Pintar ---------- */
+function pintar(){
+  const caja = $('musica'), info = estado.info;
+  if (!info || !info.name){ caja.classList.add('oculto'); return; }
+  const id = info.name + '|' + info.artistName;
+  if (id !== ultimaCancion){
+    ultimaCancion = id;
+    const url = (info.artwork && info.artwork.url || '').replace('{w}', 300).replace('{h}', 300);
+    if (url) $('portada').src = url;
+  }
+  ponerTexto($('cancion'), info.name);
+  ponerTexto($('artista'), info.artistName || '');
+  $('progreso').style.width = estado.total ? Math.min(100, estado.actual / estado.total * 100) + '%' : '0';
+  caja.classList.toggle('pausa', !estado.sonando);
+  $('estado').textContent = estado.sonando ? 'Sonando ahora' : 'En pausa';
+  caja.classList.toggle('oculto', !estado.sonando && OCULTAR_EN_PAUSA);
+}
+
+function ponerCancion(item){
+  if (!item) return;
+  const a = item.attributes || item;           // Cider a veces lo manda dentro de "attributes"
+  if (!a.name) return;
+  estado.info = a;
+  if (a.durationInMillis) estado.total = a.durationInMillis / 1000;
+  if (typeof a.currentPlaybackTime === 'number') estado.actual = a.currentPlaybackTime;
+  aviso('');
+  pintar();
+}
+
+// El progreso avanza solo entre mensajes
+setInterval(() => { if (estado.sonando && estado.total){ estado.actual = Math.min(estado.total, estado.actual + 1); pintar(); } }, 1000);
+
+/* ---------- Conexión por WebSockets (Cider 3/4) ---------- */
+let socket = null, hostIdx = 0;
+
+function conectar(){
+  if (typeof io === 'undefined'){ aviso('No se ha podido cargar la librería de conexión (¿OBS sin internet?).'); return; }
+  const host = HOSTS[hostIdx % HOSTS.length];
+  aviso(`Conectando con Cider (${host}:${PUERTO})…`);
+  socket = io(`http://${host}:${PUERTO}/`, {
+    transports: ['websocket'], reconnection: false, timeout: 4000,
+    auth: TOKEN ? { token: TOKEN, apptoken: TOKEN } : undefined,
+    query: TOKEN ? { token: TOKEN, apptoken: TOKEN } : undefined
+  });
+
+  socket.on('connect', () => {
+    aviso('Conectado con Cider. Si no sale nada, dale a pausa y play (o cambia de canción).');
+    leerREST(host);                              // intenta coger la canción actual al momento
+  });
+
+  socket.on('API:Playback', (msg) => {
+    if (!msg) return;
+    const { type, data } = msg;
+    if (!data) return;
+    switch (type){
+      case 'playbackStatus.nowPlayingItemDidChange':
+        estado.actual = 0; ponerCancion(data); break;
+      case 'playbackStatus.playbackStateDidChange':
+        estado.sonando = data.state === 'playing' || data.state === 2;
+        ponerCancion(data.attributes || data); pintar(); break;
+      case 'playbackStatus.playbackTimeDidChange':
+        if (typeof data.currentPlaybackTime === 'number') estado.actual = data.currentPlaybackTime;
+        if (data.currentPlaybackDuration) estado.total = data.currentPlaybackDuration;
+        if (typeof data.isPlaying === 'boolean') estado.sonando = data.isPlaying;
+        pintar(); break;
+    }
+  });
+
+  const fallo = () => {
+    try { socket.close(); } catch (_) {}
+    hostIdx++;
+    if (hostIdx % HOSTS.length === 0) aviso('No consigo conectar con Cider en el puerto ' + PUERTO + '. ¿Está abierto y con la "API de WebSockets" activada? Reintentando…');
+    setTimeout(conectar, hostIdx % HOSTS.length === 0 ? 5000 : 300);
+  };
+  socket.on('connect_error', fallo);
+  socket.on('disconnect', () => { $('musica').classList.add('oculto'); fallo(); });
+}
+
+/* ---------- Lectura directa (por si Cider la permite) ---------- */
+async function leerREST(host){
+  try {
+    const h = TOKEN ? { apptoken: TOKEN } : {};
+    const r = await fetch(`http://${host}:${PUERTO}/api/v1/playback/now-playing`, { headers: h, cache: 'no-store' });
+    if (!r.ok) return;
+    const j = await r.json();
+    if (j.info){
+      ponerCancion(j.info);
+      try {
+        const e = await (await fetch(`http://${host}:${PUERTO}/api/v1/playback/is-playing`, { headers: h, cache: 'no-store' })).json();
+        estado.sonando = !!e.is_playing; pintar();
+      } catch (_) {}
+    }
+  } catch (_) { /* sin problema: esperamos a los eventos */ }
+}
+
+conectar();
+</script>
+</body>
+</html>
