@@ -115,35 +115,30 @@ function ponerCancion(item){
   estado.info = a;
   if (a.durationInMillis) estado.total = a.durationInMillis / 1000;
   if (typeof a.currentPlaybackTime === 'number') estado.actual = a.currentPlaybackTime;
-  aviso('');
+  actualizarAviso && actualizarAviso();
   pintar();
 }
 
 // El progreso avanza solo entre mensajes
 setInterval(() => { if (estado.sonando && estado.total){ estado.actual = Math.min(estado.total, estado.actual + 1); pintar(); } }, 1000);
 
-/* ---------- Conexión por WebSockets (Cider 3/4) ---------- */
-let socket = null, hostIdx = 0;
+/* ---------- Vía 1: Socket.io (eventos en tiempo real) ---------- */
+let socket = null, hostIdx = 0, conectadoSocket = false, okREST = false, ultimoError = '';
 
 function conectar(){
-  if (typeof io === 'undefined'){ aviso('No se ha podido cargar la librería de conexión (¿OBS sin internet?).'); return; }
+  if (typeof io === 'undefined'){ aviso('No se ha podido cargar la librería de conexión (¿sin internet?).'); return; }
   const host = HOSTS[hostIdx % HOSTS.length];
-  aviso(`Conectando con Cider (${host}:${PUERTO})…`);
   socket = io(`http://${host}:${PUERTO}/`, {
-    transports: ['websocket'], reconnection: false, timeout: 4000,
-    auth: TOKEN ? { token: TOKEN, apptoken: TOKEN } : undefined,
+    transports: ['polling', 'websocket'],   // primero HTTP normal, luego intenta mejorar a WebSocket
+    reconnection: false, timeout: 8000,
     query: TOKEN ? { token: TOKEN, apptoken: TOKEN } : undefined
   });
 
-  socket.on('connect', () => {
-    aviso('Conectado con Cider. Si no sale nada, dale a pausa y play (o cambia de canción).');
-    leerREST(host);                              // intenta coger la canción actual al momento
-  });
+  socket.on('connect', () => { conectadoSocket = true; actualizarAviso(); });
 
   socket.on('API:Playback', (msg) => {
-    if (!msg) return;
+    if (!msg || !msg.data) return;
     const { type, data } = msg;
-    if (!data) return;
     switch (type){
       case 'playbackStatus.nowPlayingItemDidChange':
         estado.actual = 0; ponerCancion(data); break;
@@ -158,34 +153,54 @@ function conectar(){
     }
   });
 
-  const fallo = () => {
+  const fallo = (err) => {
+    conectadoSocket = false;
+    if (err && err.message) ultimoError = err.message;
     try { socket.close(); } catch (_) {}
     hostIdx++;
-    if (hostIdx % HOSTS.length === 0) aviso('No consigo conectar con Cider en el puerto ' + PUERTO + '. ¿Está abierto y con la "API de WebSockets" activada? Reintentando…');
-    setTimeout(conectar, hostIdx % HOSTS.length === 0 ? 5000 : 300);
+    actualizarAviso();
+    setTimeout(conectar, hostIdx % HOSTS.length === 0 ? 5000 : 500);
   };
   socket.on('connect_error', fallo);
-  socket.on('disconnect', () => { $('musica').classList.add('oculto'); fallo(); });
+  socket.on('disconnect', () => fallo());
 }
 
-/* ---------- Lectura directa (por si Cider la permite) ---------- */
-async function leerREST(host){
-  try {
-    const h = TOKEN ? { apptoken: TOKEN } : {};
-    const r = await fetch(`http://${host}:${PUERTO}/api/v1/playback/now-playing`, { headers: h, cache: 'no-store' });
-    if (!r.ok) return;
-    const j = await r.json();
-    if (j.info){
-      ponerCancion(j.info);
-      try {
-        const e = await (await fetch(`http://${host}:${PUERTO}/api/v1/playback/is-playing`, { headers: h, cache: 'no-store' })).json();
-        estado.sonando = !!e.is_playing; pintar();
-      } catch (_) {}
-    }
-  } catch (_) { /* sin problema: esperamos a los eventos */ }
+/* ---------- Vía 2: preguntar a la API cada 3 segundos ---------- */
+async function leerREST(){
+  for (const host of HOSTS){
+    try {
+      const h = TOKEN ? { apptoken: TOKEN } : {};
+      const r = await fetch(`http://${host}:${PUERTO}/api/v1/playback/now-playing`, { headers: h, cache: 'no-store' });
+      if (r.status === 401 || r.status === 403){ ultimoError = 'Cider pide token'; continue; }
+      if (!r.ok) continue;
+      const j = await r.json();
+      okREST = true;
+      if (j.info){
+        if (typeof j.info.currentPlaybackTime === 'number') estado.actual = j.info.currentPlaybackTime;
+        ponerCancion(j.info);
+        try {
+          const e = await (await fetch(`http://${host}:${PUERTO}/api/v1/playback/is-playing`, { headers: h, cache: 'no-store' })).json();
+          if (typeof e.is_playing === 'boolean'){ estado.sonando = e.is_playing; pintar(); }
+        } catch (_) {}
+      }
+      actualizarAviso();
+      return;
+    } catch (_) { /* probamos el siguiente host */ }
+  }
+  okREST = false;
+  actualizarAviso();
 }
 
+function actualizarAviso(){
+  if (estado.info && estado.info.name && (conectadoSocket || okREST)){ aviso(''); return; }
+  if (conectadoSocket || okREST){ aviso('Conectado con Cider (' + (conectadoSocket ? 'eventos' : 'API') + '). Dale a pausa y play o cambia de canción.'); return; }
+  aviso('No consigo conectar con Cider en el puerto ' + PUERTO + '. Reintentando… ' + (ultimoError ? '[' + ultimoError + ']' : ''));
+}
+
+aviso('Conectando con Cider…');
 conectar();
+leerREST();
+setInterval(leerREST, 3000);
 </script>
 </body>
 </html>
