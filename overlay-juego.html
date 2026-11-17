@@ -93,7 +93,8 @@ const CADA_MS = 8000;        // cada cuánto mira qué suena
 const DEPURAR = false;        // true = muestra abajo a la izquierda qué falla. Cuando funcione, ponlo en false.
 
 const $ = (id) => document.getElementById(id);
-let ultimaCancion = "";
+let ultimaCancion = "", duracionMs = 0, inicioCancion = 0, estabaParado = false;
+const MARGEN_MS = 20000;   // tiempo extra antes de dar la canción por pausada
 
 function aviso(texto){
   const el = $('depurar');
@@ -122,10 +123,10 @@ function portadaApple(cancion, artista){
   return new Promise((resolver) => {
     const cb = 'itunes_' + Date.now();
     const s = document.createElement('script');
-    const fin = (url) => { delete window[cb]; s.remove(); resolver(url); };
+    const fin = (url, dur = 0) => { delete window[cb]; s.remove(); resolver({ url, dur }); };
     window[cb] = (r) => {
       const t = r && r.results && r.results[0];
-      fin(t && t.artworkUrl100 ? t.artworkUrl100.replace('100x100bb', '600x600bb') : '');
+      fin(t && t.artworkUrl100 ? t.artworkUrl100.replace('100x100bb', '600x600bb') : '', (t && t.trackTimeMillis) || 0);
     };
     s.onerror = () => fin('');
     setTimeout(() => window[cb] && fin(''), 5000);
@@ -161,7 +162,9 @@ async function actualizar(){
     const id = cancion + '|' + artista;
     if (id !== ultimaCancion){
       ultimaCancion = id;
-      let portada = await portadaApple(cancion, artista);
+      const apple = await portadaApple(cancion, artista);
+      let portada = apple.url;
+      duracionMs = apple.dur; inicioCancion = Date.now();
       if (!portada){
         const imgs = t.image || [];
         portada = (imgs[imgs.length - 1] || {})['#text'] || '';
@@ -172,10 +175,13 @@ async function actualizar(){
       if (portada) colorDePortada(portada); else ponerAcento();
       const v = $('vinilo'); v.style.animation = 'none'; void v.offsetWidth; v.style.animation = '';
     }
+    if (estabaParado){ inicioCancion = Date.now(); estabaParado = false; } // vuelve a sonar tras una pausa
     ponerTexto($('cancion'), cancion);
     ponerTexto($('artista'), artista);
-    caja.classList.remove('pausa', 'oculto');
-    $('estado').textContent = 'Sonando ahora';
+    caja.classList.remove('oculto');
+    const pasada = duracionMs && (Date.now() - inicioCancion > duracionMs + MARGEN_MS);
+    caja.classList.toggle('pausa', !!pasada);
+    $('estado').textContent = pasada ? 'En pausa' : 'Sonando ahora';
     aviso('');
   } catch (e) {
     parado();
@@ -190,7 +196,8 @@ function parado(){
   const caja = $('musica');
   caja.classList.remove('oculto');
   caja.classList.add('pausa');
-  $('estado').textContent = 'Sin música';
+  estabaParado = true;
+  $('estado').textContent = ultimaCancion ? 'En pausa' : 'Sin música';
   if (!ultimaCancion){                       // nunca ha sonado nada todavía
     $('portada').src = SIN_PORTADA; $('etiqueta').src = SIN_PORTADA;
     ponerTexto($('cancion'), 'Nada sonando');
